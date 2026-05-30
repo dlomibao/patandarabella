@@ -339,6 +339,23 @@
   const MAX_SPEED = 2.6;
   const MIN_SPEED = 1.0;
 
+  // Pointer attractor: while pressed, birds are drawn toward the pointer.
+  const pointer = { active: false, x: 0, y: 0 };
+  function setPointer(e) {
+    const t = e.touches ? e.touches[0] : e;
+    pointer.x = t.clientX;
+    pointer.y = t.clientY;
+  }
+  window.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return; // don't attract when tapping UI
+    pointer.active = true;
+    setPointer(e);
+  });
+  window.addEventListener('pointermove', (e) => { if (pointer.active) setPointer(e); });
+  window.addEventListener('pointerup',   () => { pointer.active = false; });
+  window.addEventListener('pointercancel', () => { pointer.active = false; });
+  window.addEventListener('pointerleave', () => { pointer.active = false; });
+
   function limit(b, max, min) {
     const sp = Math.hypot(b.vx, b.vy);
     if (sp > max) { b.vx = b.vx / sp * max; b.vy = b.vy / sp * max; }
@@ -412,6 +429,19 @@
         // Gentle wander
         b.vx += (Math.random() - 0.5) * 0.05 * flockK;
         b.vy += (Math.random() - 0.5) * 0.05 * flockK;
+      }
+
+      // Pointer attractor — strong but distance-falloff so close birds swirl
+      // instead of piling up. Works in every phase.
+      if (pointer.active) {
+        const dx = pointer.x - b.x;
+        const dy = pointer.y - b.y;
+        const d2 = dx * dx + dy * dy;
+        const d = Math.sqrt(d2) + 0.001;
+        // Inverse falloff capped near the cursor so birds orbit, don't singularity-collapse
+        const pull = 60 / (d + 20);
+        b.vx += (dx / d) * pull * 0.06;
+        b.vy += (dy / d) * pull * 0.06;
       }
 
       // Target seek
