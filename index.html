@@ -171,8 +171,8 @@
   const offCtx = off.getContext('2d');
 
   function sampleShapePoints(drawFn, count, padding = 40) {
-    off.width = Math.max(800, W);
-    off.height = Math.max(600, H);
+    off.width = W;
+    off.height = H;
     offCtx.setTransform(1, 0, 0, 1, 0, 0);
     offCtx.clearRect(0, 0, off.width, off.height);
     offCtx.fillStyle = '#fff';
@@ -217,17 +217,26 @@
   }
 
   function drawText(c, w, h) {
-    const cx = w / 2;
-    const cy = h / 2;
+    // Match the DOM message exactly so bird-formed text aligns with the
+    // real text that fades in afterward. The .message element is laid out
+    // even while hidden (opacity:0), so getBoundingClientRect is accurate.
+    const line1El = document.querySelector('.message .line1');
+    const line2El = document.querySelector('.message .line2');
+    if (!line1El || !line2El) return;
+    const r1 = line1El.getBoundingClientRect();
+    const r2 = line2El.getBoundingClientRect();
+    const cs1 = getComputedStyle(line1El);
+    const cs2 = getComputedStyle(line2El);
+
     c.fillStyle = '#fff';
     c.textAlign = 'center';
     c.textBaseline = 'middle';
-    const big = Math.min(w * 0.08, h * 0.14);
-    const small = Math.min(w * 0.045, h * 0.075);
-    c.font = `600 ${small}px "Cormorant Garamond", Georgia, serif`;
-    c.fillText('Congratulations', cx, cy - big * 0.85);
-    c.font = `400 ${big}px "Great Vibes", "Cormorant Garamond", cursive`;
-    c.fillText('Pat & Arabella', cx, cy + big * 0.15);
+
+    c.font = `${cs1.fontStyle} ${cs1.fontWeight} ${cs1.fontSize} ${cs1.fontFamily}`;
+    c.fillText('Congratulations', r1.left + r1.width / 2, r1.top + r1.height / 2);
+
+    c.font = `${cs2.fontStyle} ${cs2.fontWeight} ${cs2.fontSize} ${cs2.fontFamily}`;
+    c.fillText('Pat & Arabella', r2.left + r2.width / 2, r2.top + r2.height / 2);
   }
 
   // ---------- Birds ----------
